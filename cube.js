@@ -15,38 +15,74 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-//ADD FLOOR
-/*
-var material = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture('texture.jpg') });
-var floor = new THREE.Mesh( new THREE.PlaneGeometry(10,10), new THREE.MeshBasicMaterial(material));
-scene.add(floor);
-*/
-// each square
-var numW = 40; // number of tiles wide
-var numH = 40; // number of tiles high
+
+
+var numW = 10; // number of tiles wide
+var numH = 10; // number of tiles high
+
+var materialWire  = new THREE.MeshBasicMaterial({color:0x000000, wireframe:true}); // matIdx = 0
+var materialRed   = new THREE.MeshBasicMaterial({color:0xFF0000}); 
+var materialGreen = new THREE.MeshBasicMaterial({color:0x00FF00}); 
+
+// One material per tile
+var materialsArray = [numH*numW];
+for (var i = numW-1; i >= 0; --i) {
+	for (var j = numH-1; j >= 0; --j) {
+		materialsArray[i+j*numW] = materialWire;
+	}
+}
+var multiMaterial = new THREE.MeshFaceMaterial( materialsArray );
+
 var planeWidth = 1; // how many wide 
 var planeHeight = 1; // how many tall 
-var plane = new THREE.Mesh( new THREE.PlaneGeometry( numW*planeWidth, numH*planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true } ) );
-plane.position.x = plane.position.y = 0.5;
+var planeGeo = new THREE.PlaneGeometry( numW*planeWidth, numH*planeHeight, numW, numH );
+for (var i = 0; 2*i < numW*numH*2; ++i) {
+	planeGeo.faces[i*2].materialIndex = planeGeo.faces[i*2+1].materialIndex = i;
+}
+
+
+var plane = new THREE.Mesh( 
+	//new THREE.PlaneGeometry( numW*planeWidth, numH*planeHeight, numW, numH ), 
+	//new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true } ) 
+	planeGeo,
+	multiMaterial
+);
+plane.position.x = numW*planeWidth*0.5-0.5;
+plane.position.y = -numH*planeHeight*0.5+0.5;
 scene.add(plane);
 
 
-//var cube = new THREE.Mesh( new THREE.CubeGeometry(1,2,1), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
-//scene.add( cube );
 
-function Player() {
-	this.cube = new THREE.Mesh( new THREE.CubeGeometry(1,1,1), new THREE.MeshLambertMaterial( { color: 0xff0000 } ) );
+
+function Player(_color) {
+	this.c = _color;
+	this.cube = new THREE.Mesh( new THREE.CubeGeometry(1,1,1), new THREE.MeshLambertMaterial( { color: (_color  ? _color :0xff0000) } ) );
 	this.cube.position.z = 0.5; // avoid being inside surface
 	scene.add(this.cube);
 	this.direction = -1;
 	this.speed = 2;
 
 	this.logic = function() {
+		//plane.geometry.faces[(this.cube.position.x)*2+(this.cube.position.y*-1*2*numW)].materialIndex = 1;
+		materialsArray[this.cube.position.x+this.cube.position.y*-1*numW] = (this.c === 'green' ? materialGreen : materialRed);
+
 		switch(this.direction) {
-			case 0: ++this.cube.position.x; break;
-			case 1: ++this.cube.position.y; break;
-			case 2: --this.cube.position.x; break;
-			case 3: --this.cube.position.y; break;
+			case 0: 
+				if (this.cube.position.x < numW-1) ++this.cube.position.x; 
+				else this.direction = -1;
+			break;
+			case 1:
+				if (this.cube.position.y < 0) ++this.cube.position.y;
+				else this.direction = -1;
+			break;
+			case 2:
+				if (this.cube.position.x > 0) --this.cube.position.x;
+				else this.direction = -1;
+			break;
+			case 3:
+				if (this.cube.position.y > -numH+1) --this.cube.position.y;
+				else this.direction = -1;
+			break;
 		}
 	}
 
@@ -59,10 +95,22 @@ function Player() {
 	}
 }
 
-player = new Player();
+var player = new Player('red');
+
+//Oponent for testing
+var op = new Player('green');
+op.control = function(dt) { //for testing purposes
+		if (kb.char('I')) this.direction = 1;
+		if (kb.char('J')) this.direction = 2;
+		if (kb.char('K')) this.direction = 3;
+		if (kb.char('L')) this.direction = 0;
+		if (kb.char(' ')) this.direction = -1;
+}
+op.cube.position.x = 2;
+scene.add(op.cube)
 
 function cameraLogic(dt, p) {
-	var speed = CAMERA_SPEED;
+	var speed = SPS/2; // CHECK THIS
 	var dist = CAMERA_DISTANCE;
 	camera.position.x += (p.cube.position.x - camera.position.x)*dt*speed;
 	if (camera.position.y > p.cube.position.y - dist) speed*=2;
@@ -71,9 +119,9 @@ function cameraLogic(dt, p) {
 
 // create a point light
 var pointLight = new THREE.PointLight(0xFFFFFF);
-pointLight.position.x = 10;
-pointLight.position.y = 50;
-pointLight.position.z = 130;
+pointLight.position.x = 0;
+pointLight.position.y = 0;
+pointLight.position.z = 10;
 scene.add(pointLight);
 
 camera.position.z = 10; // distance from floor
@@ -87,10 +135,11 @@ function logic(dt) {
 	if (kb.char('X')) camera.position.z -= dt*5;
 	if (kb.char('R')) camera.rotation.x += dt;
 	if (kb.char('T')) camera.rotation.x -= dt;
-	if (kb.char('L')) {
-		console.log('info\ncampz: ' + camera.position.z + '\ncamrx: '+camera.rotation.x);
-	}
 }
+
+
+var focusPlayer = true;
+var focusChanged = false;
 
 function render() {
 	requestAnimationFrame(render);
@@ -100,13 +149,23 @@ function render() {
 
 	if (time-oldLogic > 1000/SPS) {
 		logic(dt);
+		op.logic(dt);
 		oldLogic = time;
 	}
 	else {
 	}
 
+	if (kb.char('B') && !focusChanged) {
+		focusPlayer = !focusPlayer;
+		focusChanged = true;
+	}
+	else if (!kb.char('B')) focusChanged = false;
+
+	op.control();
 	player.control();
-	cameraLogic(dt, player);
+	
+	if (focusPlayer) cameraLogic(dt, player);
+	else cameraLogic(dt, op);
 
 	renderer.render(scene, camera);
 }
