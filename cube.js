@@ -77,6 +77,7 @@ pointLight.position.z = 130;
 scene.add(pointLight);
 
 camera.position.z = 10; // distance from floor
+camera.position.x = camera.position.y = 5000; // inital effect
 camera.rotation.x = 0.7;
 
 
