@@ -1,8 +1,9 @@
 var kb = new KeyboardJS(false, function (evt) {evt.preventDefault();});
 // CONSTANTS
 var SPS = 5; //STEPS PER SECOND
-var CAMERA_SPEED = 2; //speed of the camera
-var CAMERA_DISTANCE = 3;
+var CAMERA_SPEED = 3; //speed of the camera
+var CAMERA_DISTANCE = 6;
+var CAMERA_SMOOTH = 5;
 
 
 //SCENE
@@ -63,10 +64,9 @@ player = new Player();
 function cameraLogic(dt, p) {
 	var speed = CAMERA_SPEED;
 	var dist = CAMERA_DISTANCE;
-	if (camera.position.x-speed*dt > p.cube.position.x) camera.position.x -= speed*dt;
-	if (camera.position.x+speed*dt < p.cube.position.x) camera.position.x += speed*dt;
-	if (camera.position.y-speed*dt > p.cube.position.y - dist) camera.position.y -= speed*dt*2.5;
-	if (camera.position.y+speed*dt < p.cube.position.y - dist) camera.position.y += speed*dt;
+	camera.position.x += (p.cube.position.x - camera.position.x)*dt*speed;
+	if (camera.position.y > p.cube.position.y - dist) speed*=2;
+	camera.position.y += (p.cube.position.y - dist - camera.position.y)*dt*speed;
 }
 
 // create a point light
