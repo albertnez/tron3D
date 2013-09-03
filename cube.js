@@ -1,10 +1,11 @@
 var kb = new KeyboardJS(false/*, function (evt) {evt.preventDefault();}*/); //Keyboard for input
 // CONSTANTS
-var SPS = 5; //STEPS PER SECOND
+var SPS = 8; //STEPS PER SECOND
 var CAMERA_SPEED = 3; //speed of the camera
 var CAMERA_DISTANCE = 6;
-var MAP_WIDTH = 10;
-var MAP_HEIGHT = 10;
+var CAMERA_HEIGHT = 18;
+var MAP_WIDTH = 40;
+var MAP_HEIGHT = 40;
 var LIGHTS_ON = false;
 //SCENE
 var scene = new THREE.Scene();
@@ -34,7 +35,7 @@ function Graphics() {
 	this.multiMaterial = new THREE.MeshFaceMaterial(this.materialsArray);
 	this.planeGeo = new THREE.PlaneGeometry( MAP_WIDTH, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT );
 	for (var i = 0; 2*i < MAP_WIDTH*MAP_HEIGHT*2; ++i) {
-		this.planeGeo.faces[i*2].materialIndex = this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/10))%2;
+		this.planeGeo.faces[i*2].materialIndex = this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/MAP_WIDTH))%2;
 	}
 	this.plane = new THREE.Mesh( 
 		this.planeGeo,
@@ -47,9 +48,9 @@ function Graphics() {
 	//END BOARD
 	
 	//CAMERA SETTINGS
-	camera.position.z = 10; // distance from floor
+	camera.position.z = CAMERA_HEIGHT; // distance from floor
 	camera.position.x = camera.position.y = 5000; // inital effect
-	camera.rotation.x = 0.7;
+	camera.rotation.x = 0.38;
 
 
 	//CUBES ARRAY
@@ -76,13 +77,23 @@ function Graphics() {
 
 	this.update = function(x, y, c) {
 		if (this.cubesArray[y][x] === -1) {
-			this.cubesArray[y][x] = new THREE.Mesh(new THREE.CubeGeometry(1,1,1), new THREE.MeshBasicMaterial({color:c}));
-			this.cubesArray[y][x].position.x = x;
-			this.cubesArray[y][x].position.y = -y;
+			//this.cubesArray[y][x] = new THREE.Mesh(new THREE.CubeGeometry(1,1,1), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
+			var cube = THREE.SceneUtils.createMultiMaterialObject(
+				new THREE.CubeGeometry(1, 1, 0.5), 
+				[
+    				new THREE.MeshBasicMaterial({color: 0x000000, shading: THREE.FlatShading, wireframe: true, transparent: true}),
+ 					new THREE.MeshBasicMaterial({color: c}) 
+ 			 	] 
+ 			);
+
+ 			cube.position.x = x;
+			cube.position.y = -y;
+			cube.position.z = 0.25;
+			this.cubesArray[y][x] = cube;
 			scene.add(this.cubesArray[y][x]);
 		}
 		else {
-			this.cubesArray[y][x].material.color.setHex(c);
+			this.cubesArray[y][x].children[1].material.color.setHex(c);
 		}
 	}
 }
