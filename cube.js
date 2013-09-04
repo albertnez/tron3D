@@ -2,35 +2,58 @@ var kb = new KeyboardJS(false/*, function (evt) {evt.preventDefault();}*/); //Ke
 // CONSTANTS
 var SPS = 8; //STEPS PER SECOND
 var CAMERA_SPEED = 3; //speed of the camera
-var CAMERA_DISTANCE = 6;
-var CAMERA_HEIGHT = 18;
-var MAP_WIDTH = 40;
+var CAMERA_DISTANCE = 6; //distance of the camera from player
+var CAMERA_HEIGHT = 18; // distance of camera from board
+var CAMERA_FOLLOW = false; // follow the player or show the entire board
+var MAP_WIDTH = 40; 
 var MAP_HEIGHT = 40;
-var LIGHTS_ON = false;
-//SCENE
-var scene = new THREE.Scene();
-//CAMERA
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-//RENDERER
-var renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+var LIGHTS_ON = false; // not working
+var SHADOWS_ON = false; // not working
 
 //GRAPHICS
 function Graphics() {
-// light for testing
-	if (LIGHTS_ON) {
-		var pointLight = new THREE.PointLight(0xFFFFFF);
-		pointLight.position.x = 0;
-		pointLight.position.y = 0;
-		pointLight.position.z = 10;
-		scene.add(pointLight);
+	//SCENE
+	this.scene = new THREE.Scene();
+		//CAMERA
+	this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+	//RENDERER
+	this.renderer = new THREE.WebGLRenderer();
+	this.renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( this.renderer.domElement );
+
+	this.colors = [0x000000, 0xFF0000, 0x00FF00, 0x0000FF];
+	this.deadColor = 0x000000;
+
+
+	if (SHADOWS_ON) {
+		this.renderer.shadowMapEnabled = true;
+		this.obj = new THREE.Mesh( new THREE.CubeGeometry(5,5,5), new THREE.MeshBasicMaterial({color:'blue'}));
+		this.obj.position.x = 7;
+		this.obj.position.y = -2;
+		this.obj.castShadow = true;
+		this.scene.add(this.obj);
+
+		this.c = new THREE.Mesh( new THREE.CubeGeometry(5,5,1), new THREE.MeshBasicMaterial({color:'yellow'}));
+		this.c.position.x = 10;
+		this.c.position.y = -5;
+		this.c.receiveShadow = true;
+		this.scene.add(this.c);
 	}
 
+	// light for testing
+	if (LIGHTS_ON) {
+		this.pointLight = new THREE.SpotLight(0xFFFFFF);
+		this.pointLight.position.x = 0;
+		this.pointLight.position.y = 0;
+		this.pointLight.position.z = 3;
+		this.pointLight.castShadow = true;
+		this.pointLight.shadowDarkness = 0.6;
+		this.scene.add(this.pointLight);
+	}
 	//BOARD
 	this.materialsArray = [];
-	this.materialsArray.push(new THREE.MeshBasicMaterial({color:0x000000}));
-	this.materialsArray.push(new THREE.MeshBasicMaterial({color:0xFFFFFF}));
+	this.materialsArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+	this.materialsArray.push(new THREE.MeshBasicMaterial({color: 0xFFFFFF}));
 
 	this.multiMaterial = new THREE.MeshFaceMaterial(this.materialsArray);
 	this.planeGeo = new THREE.PlaneGeometry( MAP_WIDTH, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT );
@@ -41,16 +64,22 @@ function Graphics() {
 		this.planeGeo,
 		this.multiMaterial
 	);
+	this.plane.receiveShadow = (SHADOWS_ON);
 	//make the top left tile be at (0,0);
 	this.plane.position.x = MAP_WIDTH*0.5-0.5; 
 	this.plane.position.y = -MAP_HEIGHT*0.5+0.5;
-	scene.add(this.plane);
+	this.scene.add(this.plane);
 	//END BOARD
 	
 	//CAMERA SETTINGS
-	camera.position.z = CAMERA_HEIGHT; // distance from floor
-	camera.position.x = camera.position.y = 5000; // inital effect
-	camera.rotation.x = 0.38;
+	this.camera.position.z = CAMERA_HEIGHT; // distance from floor
+	if (CAMERA_FOLLOW) this.camera.position.x = this.camera.position.y = 5000; // inital effect
+	else {
+		this.camera.position.z += CAMERA_HEIGHT/2;
+		this.camera.position.x = MAP_WIDTH/2;
+		this.camera.position.y = -MAP_HEIGHT;
+	}
+	this.camera.rotation.x = 0.38;
 
 
 	//CUBES ARRAY
@@ -63,37 +92,43 @@ function Graphics() {
 	}
 
 	this.cameraLogic = function(dt, p) {
+		if (CAMERA_FOLLOW) {
 		var speed = SPS/2; // CHECK THIS
 		var dist = CAMERA_DISTANCE;
-		camera.position.x += (p.x - camera.position.x)*dt*speed;
-		if (camera.position.y > -p.y - dist) speed*=2;
-		camera.position.y += (-p.y - dist - camera.position.y)*dt*speed;
+		this.camera.position.x += (p.x - this.camera.position.x)*dt*speed;
+		if (this.camera.position.y > -p.y - dist) speed*=2;
+		this.camera.position.y += (-p.y - dist - this.camera.position.y)*dt*speed;
+		}
+		else {
+
+		}
 		//CAMERA STUFF
-		if (kb.char('Z')) camera.position.z += dt*5;
-		if (kb.char('X')) camera.position.z -= dt*5;
-		if (kb.char('R')) camera.rotation.x += dt;
-		if (kb.char('T')) camera.rotation.x -= dt;
+		if (kb.char('Z')) this.camera.position.z += dt*5;
+		if (kb.char('X')) this.camera.position.z -= dt*5;
+		if (kb.char('R')) this.camera.rotation.x += dt;
+		if (kb.char('T')) this.camera.rotation.x -= dt;
 	}
 
-	this.update = function(x, y, c) {
+	this.update = function(x, y, id, dead) {
 		if (this.cubesArray[y][x] === -1) {
-			//this.cubesArray[y][x] = new THREE.Mesh(new THREE.CubeGeometry(1,1,1), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
 			var cube = THREE.SceneUtils.createMultiMaterialObject(
 				new THREE.CubeGeometry(1, 1, 0.5), 
 				[
     				new THREE.MeshBasicMaterial({color: 0x000000, shading: THREE.FlatShading, wireframe: true, transparent: true}),
- 					new THREE.MeshBasicMaterial({color: c}) 
+ 					new THREE.MeshBasicMaterial({color: (dead ? this.deadColor : this.colors[id])}) 
  			 	] 
  			);
 
  			cube.position.x = x;
 			cube.position.y = -y;
 			cube.position.z = 0.25;
+
 			this.cubesArray[y][x] = cube;
-			scene.add(this.cubesArray[y][x]);
+			this.scene.add(this.cubesArray[y][x]);
 		}
 		else {
-			this.cubesArray[y][x].children[1].material.color.setHex(c);
+			console.log('changing cube at ' + x + ' ' + y);
+			this.cubesArray[y][x].children[1].material.color.setHex((dead ? this.deadColor : this.colors[id]));
 		}
 	}
 }
@@ -112,58 +147,72 @@ function Map(width, height) {
 	this.width = width;
 	this.height = height;
 
-	this.update = function(x, y, id) {
-		if (this.tiles[y][x] == 0) {
+
+	//Updates map. 
+	this.update = function(x, y, id, dead) {
 			this.tiles[y][x] = id;
-		}
+			graphics.update(x,y,id,dead)
 	}
 }
 //create the map
 var map = new Map(MAP_WIDTH, MAP_HEIGHT);
 
 //PLAYER
-function Player(id, color, controls) {
+function Player(id, color, direction, x, y, controls) {
 	this.id = (id ? id : 1);
-	this.x = 0;
-	this.y = 0;
+	this.x = (x ? x : 0);
+	this.y = (y ? y : 0);
+	this.dead = false;
 	this.c = (color ? color : 'red');
-	this.direction = -1;
+	this.direction = (direction ? direction : 3);
+	this.lastMove = -2;
 	this.controls = (controls ? controls : {up:'W',left:'A',down:'S',right:'D',stop:' '});
 }
 
 Player.prototype.update = function() {
-	switch(this.direction) {
-		case 0: 
-			if (this.x < MAP_WIDTH-1) ++this.x;
-			else this.direction = -1;
-		break;
-		case 1:
-			if (this.y > 0) --this.y;
-			else this.direction = -1;
-		break;
-		case 2:
-			if (this.x > 0) --this.x;
-			else this.direction = -1;
-		break;
-		case 3:
-			if (this.y < MAP_HEIGHT-1) ++this.y;
-			else this.direction = -1;
-		break;
+	if (!this.dead) {
+		switch(this.direction) {
+			case 0: 
+				if (this.x < MAP_WIDTH-1) ++this.x;
+				else this.direction = -1;
+			break;
+			case 1:
+				if (this.y > 0) --this.y;
+				else this.direction = -1;
+			break;
+			case 2:
+				if (this.x > 0) --this.x;
+				else this.direction = -1;
+			break;
+			case 3:
+				if (this.y < MAP_HEIGHT-1) ++this.y;
+				else this.direction = -1;
+			break;
+		}
+		if (map.tiles[this.y][this.x]) {
+			this.dead = true;
+			this.direction = -1;
+		}
+		this.lastMove = this.direction;
+		map.update(this.x, this.y, this.id, this.dead);
 	}
-	map.update(this.x, this.y, this.c);
-	graphics.update(this.x, this.y, this.c);
 }
 
 Player.prototype.control = function(dt) {
-	if (kb.char(this.controls.up)) this.direction = 1;
-	if (kb.char(this.controls.left)) this.direction = 2;
-	if (kb.char(this.controls.down)) this.direction = 3;
-	if (kb.char(this.controls.right)) this.direction = 0;
-	if (kb.char(this.controls.stop)) this.direction = -1;
+	if (!this.dead) {
+		if (kb.char(this.controls.up) && this.lastMove != 3) this.direction = 1;
+		if (kb.char(this.controls.left) && this.lastMove != 0) this.direction = 2;
+		if (kb.char(this.controls.down) && this.lastMove != 1) this.direction = 3;
+		if (kb.char(this.controls.right) && this.lastMove != 2) this.direction = 0;
+		if (kb.char(this.controls.stop)) this.direction = -1;
+	}
 }
 
 //Players
-var players = [new Player(1, 0xFF0000), new Player(2, 0x00FF00, {up:'I',left:'J',down:'K',right:'L',stop:' '})];
+var players = [
+	new Player(1, 0xFF0000, 3, 0, 0), 
+	new Player(2, 0x00FF00, 0, 5, 0, {up:'I',left:'J',down:'K',right:'L',stop:' '})
+];
 
 function update(dt) {
 	for (var i = players.length-1; i >= 0; --i)	players[i].update(dt);
@@ -173,8 +222,8 @@ function control() {
 	for (var i = players.length-1; i >= 0; --i) players[i].control();
 }
 
-function render() {
-	requestAnimationFrame(render);
+function loop() {
+	requestAnimationFrame(loop);
 	var time = new Date().getTime();
 	var dt = (time-oldTime)/1000;
 	oldTime = time;
@@ -188,9 +237,9 @@ function render() {
 	
 	graphics.cameraLogic(dt, players[0]);
 
-	renderer.render(scene, camera);
+	graphics.renderer.render(graphics.scene, graphics.camera);
 }
 
 var oldTime = new Date().getTime();
 var oldUpdate = 0;
-render();
+loop();
