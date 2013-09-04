@@ -5,8 +5,8 @@ var CAMERA_SPEED = 3; //speed of the camera
 var CAMERA_DISTANCE = 6; //distance of the camera from player
 var CAMERA_HEIGHT = 18; // distance of camera from board
 var CAMERA_FOLLOW = false; // follow the player or show the entire board
-var MAP_WIDTH = 40; 
-var MAP_HEIGHT = 40;
+var MAP_WIDTH = 30; 
+var MAP_HEIGHT = 30;
 var LIGHTS_ON = false; // not working
 var SHADOWS_ON = false; // not working
 
@@ -15,7 +15,8 @@ function Graphics() {
 	//SCENE
 	this.scene = new THREE.Scene();
 		//CAMERA
-	this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+	this.FOV = 45;
+	this.camera = new THREE.PerspectiveCamera( this.FOV, window.innerWidth / window.innerHeight, 0.1, 1000 );
 	//RENDERER
 	this.renderer = new THREE.WebGLRenderer();
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
@@ -58,7 +59,7 @@ function Graphics() {
 	this.multiMaterial = new THREE.MeshFaceMaterial(this.materialsArray);
 	this.planeGeo = new THREE.PlaneGeometry( MAP_WIDTH, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT );
 	for (var i = 0; 2*i < MAP_WIDTH*MAP_HEIGHT*2; ++i) {
-		this.planeGeo.faces[i*2].materialIndex = this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/MAP_WIDTH))%2;
+		this.planeGeo.faces[i*2].materialIndex = this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/MAP_WIDTH)*(MAP_WIDTH+1%2))%2;
 	}
 	this.plane = new THREE.Mesh( 
 		this.planeGeo,
@@ -72,14 +73,17 @@ function Graphics() {
 	//END BOARD
 	
 	//CAMERA SETTINGS
-	this.camera.position.z = CAMERA_HEIGHT; // distance from floor
-	if (CAMERA_FOLLOW) this.camera.position.x = this.camera.position.y = 5000; // inital effect
-	else {
-		this.camera.position.z += CAMERA_HEIGHT/2;
-		this.camera.position.x = MAP_WIDTH/2;
-		this.camera.position.y = -MAP_HEIGHT;
+	if (CAMERA_FOLLOW) {
+		this.camera.position.x = this.camera.position.y = 5000; // inital effect
+		this.camera.rotation.x = 0.38;
+		this.camera.position.z = CAMERA_HEIGHT;
 	}
-	this.camera.rotation.x = 0.38;
+	else {
+		this.camera.position.x = MAP_WIDTH/2;
+		this.camera.position.y = -MAP_HEIGHT/2;
+		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)+10;
+		//this.camera.position.z = (Math.max(MAP_WIDTH,MAP_HEIGHT)/2)/Math.tan(this.FOV/2);
+	}
 
 
 	//CUBES ARRAY
@@ -158,19 +162,29 @@ function Map(width, height) {
 var map = new Map(MAP_WIDTH, MAP_HEIGHT);
 
 //PLAYER
-function Player(id, color, direction, x, y, controls) {
-	this.id = (id ? id : 1);
-	this.x = (x ? x : 0);
-	this.y = (y ? y : 0);
-	this.dead = false;
-	this.c = (color ? color : 'red');
-	this.direction = (direction ? direction : 3);
-	this.lastMove = -2;
-	this.controls = (controls ? controls : {up:'W',left:'A',down:'S',right:'D',stop:' '});
+function Player(obj) {
+	for (var prop in obj) this[prop] = obj[prop];
+}
+
+Player.prototype = {
+	id: 1,
+	bot: false,
+	x: 0,
+	y: 0,
+	dead: false,
+	c: 'red',
+	direction: 0,
+	lastMove: -1,
+	controls: {up:'W', left:'A', down:'S', right:'D', stop:'E'}
+}
+
+Player.prototype.IA = function() {
+	
 }
 
 Player.prototype.update = function() {
 	if (!this.dead) {
+		if (this.bot) this.IA();
 		switch(this.direction) {
 			case 0: 
 				if (this.x < MAP_WIDTH-1) ++this.x;
@@ -210,8 +224,11 @@ Player.prototype.control = function(dt) {
 
 //Players
 var players = [
-	new Player(1, 0xFF0000, 3, 0, 0), 
-	new Player(2, 0x00FF00, 0, 5, 0, {up:'I',left:'J',down:'K',right:'L',stop:' '})
+	new Player({id:1, color: 0xFF0000, direction: 2, x: MAP_WIDTH/2-1, y: MAP_HEIGHT/2-1}), 
+	new Player({
+		id:2, color: 0x00FF00, direction: 0, x: MAP_WIDTH/2+1, y: MAP_HEIGHT/2-1,
+		controls : {up:'I',left:'J',down:'K',right:'L',stop:'U'}
+	})
 ];
 
 function update(dt) {
