@@ -181,11 +181,9 @@ Player.prototype = {
 
 }
 
-Player.prototype.IA = function() {
+Player.prototype.AI = function() {
 	var ty = this.y + this.dy[this.direction], tx = this.x + this.dx[this.direction];
-	console.log('x: ' + this.x + ' y: ' + this.y + '\ntx: ' + tx + ' ty: ' + ty);
 	if (ty < 0 || ty >= MAP_HEIGHT || tx < 0 || tx >= MAP_WIDTH || map.tiles[ty][tx]) {
-		console.log('crash at ' + this.x + ' ' + this.y);
 		var tmp = (this.direction+1)%4;
 		ty = this.y + this.dy[tmp];
 		tx = this.x + this.dx[tmp];
@@ -196,7 +194,7 @@ Player.prototype.IA = function() {
 
 Player.prototype.update = function() {
 	if (!this.dead) {
-		if (this.bot) this.IA();
+		if (this.bot) this.AI();
 		switch(this.direction) {
 			case 0: 
 				if (this.x < MAP_WIDTH-1) ++this.x;
