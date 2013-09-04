@@ -175,11 +175,23 @@ Player.prototype = {
 	c: 'red',
 	direction: 0,
 	lastMove: -1,
-	controls: {up:'W', left:'A', down:'S', right:'D', stop:'E'}
+	controls: {up:'W', left:'A', down:'S', right:'D', stop:'E'},
+	dx: [1,0,-1,0],
+	dy: [0,-1,0,1]
+
 }
 
 Player.prototype.IA = function() {
-	
+	var ty = this.y + this.dy[this.direction], tx = this.x + this.dx[this.direction];
+	console.log('x: ' + this.x + ' y: ' + this.y + '\ntx: ' + tx + ' ty: ' + ty);
+	if (ty < 0 || ty >= MAP_HEIGHT || tx < 0 || tx >= MAP_WIDTH || map.tiles[ty][tx]) {
+		console.log('crash at ' + this.x + ' ' + this.y);
+		var tmp = (this.direction+1)%4;
+		ty = this.y + this.dy[tmp];
+		tx = this.x + this.dx[tmp];
+		if (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) this.direction = tmp;
+		else this.direction = (this.direction+3)%4;
+	}
 }
 
 Player.prototype.update = function() {
@@ -226,7 +238,7 @@ Player.prototype.control = function(dt) {
 var players = [
 	new Player({id:1, color: 0xFF0000, direction: 2, x: MAP_WIDTH/2-1, y: MAP_HEIGHT/2-1}), 
 	new Player({
-		id:2, color: 0x00FF00, direction: 0, x: MAP_WIDTH/2+1, y: MAP_HEIGHT/2-1,
+		id:2, bot:true, color: 0x00FF00, direction: 0, x: MAP_WIDTH/2+1, y: MAP_HEIGHT/2-1,
 		controls : {up:'I',left:'J',down:'K',right:'L',stop:'U'}
 	})
 ];
