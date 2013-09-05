@@ -9,6 +9,8 @@ var MAP_WIDTH = 30;
 var MAP_HEIGHT = 30;
 var LIGHTS_ON = false; // not working
 var SHADOWS_ON = false; // not working
+var NUM_PLAYERS = 4; //1 to 6.
+var RANDOM_START = true; //Start at random position and direction;
 
 //GRAPHICS
 function Graphics() {
@@ -22,9 +24,19 @@ function Graphics() {
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( this.renderer.domElement );
 
-	this.colors = [0x000000, 0xFF0000, 0x00FF00, 0x0000FF];
+	//Array with players'colors. needs to change
+	this.colors = [
+		0x000000, //BLACK
+		0xFF0000, //RED
+		0x00FF00, //GREN
+		0x0000FF, //BLUE
+		0x922BC2, //PURPLE
+	 	0xFFFF00, //YELLOW
+	 	0x00FFFF, //AQUA
+	 	0xFF4AD2, //PINK
+	 	0XAAAAAA //GREY
+	 ];
 	this.deadColor = 0x000000;
-
 
 	if (SHADOWS_ON) {
 		this.renderer.shadowMapEnabled = true;
@@ -74,14 +86,13 @@ function Graphics() {
 	
 	//CAMERA SETTINGS
 	if (CAMERA_FOLLOW) {
-		this.camera.position.x = this.camera.position.y = 5000; // inital effect
 		this.camera.rotation.x = 0.38;
 		this.camera.position.z = CAMERA_HEIGHT;
 	}
 	else {
 		this.camera.position.x = MAP_WIDTH/2;
 		this.camera.position.y = -MAP_HEIGHT/2;
-		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)+10;
+		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)*1.1+10;
 		//this.camera.position.z = (Math.max(MAP_WIDTH,MAP_HEIGHT)/2)/Math.tan(this.FOV/2);
 	}
 
@@ -97,16 +108,14 @@ function Graphics() {
 
 	this.cameraLogic = function(dt, p) {
 		if (CAMERA_FOLLOW) {
-		var speed = SPS/2; // CHECK THIS
-		var dist = CAMERA_DISTANCE;
-		this.camera.position.x += (p.x - this.camera.position.x)*dt*speed;
-		if (this.camera.position.y > -p.y - dist) speed*=2;
-		this.camera.position.y += (-p.y - dist - this.camera.position.y)*dt*speed;
+			var speed = SPS/2; // CHECK THIS
+			var dist = CAMERA_DISTANCE;
+			this.camera.position.x += (p.x - this.camera.position.x)*dt*speed;
+			if (this.camera.position.y > -p.y - dist) speed*=2;
+			this.camera.position.y += (-p.y - dist - this.camera.position.y)*dt*speed;
 		}
-		else {
 
-		}
-		//CAMERA STUFF
+		//CAMERA DEBUG STUFF
 		if (kb.char('Z')) this.camera.position.z += dt*5;
 		if (kb.char('X')) this.camera.position.z -= dt*5;
 		if (kb.char('R')) this.camera.rotation.x += dt;
@@ -131,7 +140,6 @@ function Graphics() {
 			this.scene.add(this.cubesArray[y][x]);
 		}
 		else {
-			console.log('changing cube at ' + x + ' ' + y);
 			this.cubesArray[y][x].children[1].material.color.setHex((dead ? this.deadColor : this.colors[id]));
 		}
 	}
@@ -151,7 +159,6 @@ function Map(width, height) {
 	this.width = width;
 	this.height = height;
 
-
 	//Updates map. 
 	this.update = function(x, y, id, dead) {
 			this.tiles[y][x] = id;
@@ -164,6 +171,7 @@ var map = new Map(MAP_WIDTH, MAP_HEIGHT);
 //PLAYER
 function Player(obj) {
 	for (var prop in obj) this[prop] = obj[prop];
+	if (this.bot) this.controls = {};
 }
 
 Player.prototype = {
@@ -187,8 +195,24 @@ Player.prototype.AI = function() {
 		var tmp = (this.direction+1)%4;
 		ty = this.y + this.dy[tmp];
 		tx = this.x + this.dx[tmp];
-		if (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) this.direction = tmp;
-		else this.direction = (this.direction+3)%4;
+		var d1 = 0, d2 = 0;
+		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) {
+			++d1;
+			ty += this.dy[tmp];
+			tx += this.dx[tmp];
+		}
+		var tmp2 = (this.direction+3)%4;
+		ty = this.y + this.dy[tmp2];
+		tx = this.x + this.dx[tmp2];
+		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) {
+			++d2;
+			ty += this.dy[tmp2];
+			tx += this.dx[tmp2];
+		}	
+
+		if (d1 == d2) this.direction = (Math.random() > 0.5 ? tmp : tmp2);
+		else this.direction = (d1 > d2 ? tmp : tmp2);
+		
 	}
 }
 
@@ -223,7 +247,7 @@ Player.prototype.update = function() {
 }
 
 Player.prototype.control = function(dt) {
-	if (!this.dead) {
+	if (!this.dead && !this.bot) {
 		if (kb.char(this.controls.up) && this.lastMove != 3) this.direction = 1;
 		if (kb.char(this.controls.left) && this.lastMove != 0) this.direction = 2;
 		if (kb.char(this.controls.down) && this.lastMove != 1) this.direction = 3;
@@ -233,13 +257,19 @@ Player.prototype.control = function(dt) {
 }
 
 //Players
-var players = [
-	new Player({id:1, color: 0xFF0000, direction: 2, x: MAP_WIDTH/2-1, y: MAP_HEIGHT/2-1}), 
-	new Player({
-		id:2, bot:true, color: 0x00FF00, direction: 0, x: MAP_WIDTH/2+1, y: MAP_HEIGHT/2-1,
-		controls : {up:'I',left:'J',down:'K',right:'L',stop:'U'}
-	})
-];
+var players = [];
+players[0] = new Player({id:1, direction: 0, x: MAP_WIDTH/2, y: MAP_HEIGHT/2});
+players[1] = new Player({id:2, direction: 0, bot: true, x: MAP_WIDTH/2, y: MAP_HEIGHT/2-2, controls: {up:'I', down:'K', left:'J', right:'L', stop:'U'}});
+for (var i = 2; i < NUM_PLAYERS; ++i)
+	players[i] = new Player({ id: (i+1), bot:true, direction: 2*(i%2), x: MAP_WIDTH/2, y: MAP_HEIGHT/2+(2*i)});
+
+if (RANDOM_START) {
+	for (var i = 0; i < NUM_PLAYERS; ++i) {
+		players[i].x = Math.floor(Math.random()*(MAP_WIDTH-10))+5;
+		players[i].y = Math.floor(Math.random()*(MAP_HEIGHT-10))+5;
+		players[i].direction = Math.floor(Math.random()*4);
+	}
+}
 
 function update(dt) {
 	for (var i = players.length-1; i >= 0; --i)	players[i].update(dt);
