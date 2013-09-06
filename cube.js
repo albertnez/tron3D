@@ -9,7 +9,7 @@ var MAP_WIDTH = 30;
 var MAP_HEIGHT = 30;
 var LIGHTS_ON = false; // not working
 var SHADOWS_ON = false; // not working
-var NUM_PLAYERS = 4; //1 to 6.
+var NUM_PLAYERS = 2; //1 to 6.
 var RANDOM_START = true; //Start at random position and direction;
 
 //GRAPHICS
@@ -177,6 +177,7 @@ function Player(obj) {
 Player.prototype = {
 	id: 1,
 	bot: false,
+	difficulty: 0,
 	x: 0,
 	y: 0,
 	dead: false,
@@ -185,35 +186,72 @@ Player.prototype = {
 	lastMove: -1,
 	controls: {up:'W', left:'A', down:'S', right:'D', stop:'E'},
 	dx: [1,0,-1,0],
-	dy: [0,-1,0,1]
-
+	dy: [0,-1,0,1], 
+	arrayAI: [],
 }
 
 Player.prototype.AI = function() {
-	var ty = this.y + this.dy[this.direction], tx = this.x + this.dx[this.direction];
-	if (ty < 0 || ty >= MAP_HEIGHT || tx < 0 || tx >= MAP_WIDTH || map.tiles[ty][tx]) {
-		var tmp = (this.direction+1)%4;
-		ty = this.y + this.dy[tmp];
-		tx = this.x + this.dx[tmp];
+	console.log('running IA from ' + this.id);
+	this.arrayAI[this.difficulty](this);
+}
+
+// NOOB AI
+Player.prototype.arrayAI[0] = function(self) {
+	var ty = self.y + self.dy[self.direction], tx = self.x + self.dx[self.direction];
+	if (ty < 0 || ty >= MAP_HEIGHT || tx < 0 || tx >= MAP_WIDTH || map.tiles[ty][tx] > 0) {
+		var tmp = (self.direction+1)%4;
+		ty = self.y + self.dy[tmp];
+		tx = self.x + self.dx[tmp];
 		var d1 = 0, d2 = 0;
-		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) {
+		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && map.tiles[ty][tx] <= 0) {
 			++d1;
-			ty += this.dy[tmp];
-			tx += this.dx[tmp];
+			ty += self.dy[tmp];
+			tx += self.dx[tmp];
 		}
-		var tmp2 = (this.direction+3)%4;
-		ty = this.y + this.dy[tmp2];
-		tx = this.x + this.dx[tmp2];
-		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && !map.tiles[ty][tx]) {
+		var tmp2 = (self.direction+3)%4;
+		ty = self.y + self.dy[tmp2];
+		tx = self.x + self.dx[tmp2];
+		while (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH && map.tiles[ty][tx] <= 0) {
 			++d2;
-			ty += this.dy[tmp2];
-			tx += this.dx[tmp2];
+			ty += self.dy[tmp2];
+			tx += self.dx[tmp2];
 		}	
 
-		if (d1 == d2) this.direction = (Math.random() > 0.5 ? tmp : tmp2);
-		else this.direction = (d1 > d2 ? tmp : tmp2);
+		if (d1 === d2) self.direction = (Math.random() > 0.5 ? tmp : tmp2);
+		else self.direction = (d1 > d2 ? tmp : tmp2);
 		
 	}
+}
+
+
+Player.prototype.arrayAI[1] = function(self) {
+	var dfs = function(x,y) {
+		if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT || tmap[y][x]) return 0;
+		tmap[y][x] = -1;
+		return 1 + dfs(x+1, y) + dfs(x, y-1) + dfs(x-1, y) + dfs(x, y+1);
+	}
+
+	var d1 = (self.direction+1)%4;
+	var d2 = (self.direction+3)%4;
+
+	var t1, t2, t0;
+
+	var tmap = [];
+	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+	t0 = dfs(self.x+self.dx[self.direction], self.y+self.dy[self.direction]);
+	
+	tmap = [];
+	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+
+	t1 = dfs(self.x+self.dx[d1], self.y+self.dy[d1]);
+	
+	tmap = [];
+	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+	t2 = dfs(self.x+self.dx[d2],self.y+self.dy[d2]);
+	console.log('t1: ' + t1 + '  t2: ' + t2);
+
+	if (t1 > t0 && t1 >= t2) self.direction = d1; 
+	else if (t2 > t0) self.direction = d2;
 }
 
 Player.prototype.update = function() {
@@ -237,7 +275,7 @@ Player.prototype.update = function() {
 				else this.direction = -1;
 			break;
 		}
-		if (map.tiles[this.y][this.x]) {
+		if (map.tiles[this.y][this.x] > 0) {
 			this.dead = true;
 			this.direction = -1;
 		}
@@ -259,9 +297,8 @@ Player.prototype.control = function(dt) {
 //Players
 var players = [];
 players[0] = new Player({id:1, direction: 0, x: MAP_WIDTH/2, y: MAP_HEIGHT/2});
-players[1] = new Player({id:2, direction: 0, bot: true, x: MAP_WIDTH/2, y: MAP_HEIGHT/2-2, controls: {up:'I', down:'K', left:'J', right:'L', stop:'U'}});
-for (var i = 2; i < NUM_PLAYERS; ++i)
-	players[i] = new Player({ id: (i+1), bot:true, direction: 2*(i%2), x: MAP_WIDTH/2, y: MAP_HEIGHT/2+(2*i)});
+for (var i = 1; i < NUM_PLAYERS; ++i)
+	players[i] = new Player({ id: (i+1), bot:true, difficulty: (i%2), direction: 2*(i%2), x: MAP_WIDTH/2, y: MAP_HEIGHT/2+(2*i)});
 
 if (RANDOM_START) {
 	for (var i = 0; i < NUM_PLAYERS; ++i) {
