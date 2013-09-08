@@ -41,6 +41,8 @@ Game.prototype.restart = function() {
 	this.graphics.restart();
 	this.map.restart();
 	this.setPlayers();
+	for (var i = game.players.length-1; i >= 0; --i) game.players[i].update(game.map, game.graphics);
+
 
 }
 // CONTROLS FOR PLAYER 1
@@ -53,8 +55,8 @@ Game.prototype.update = function() {
 
 Game.prototype.control = function() {
 	for (var i = this.players.length-1; i >= 0; --i) this.players[i].control();
-	// LAZY RESTART
-	if (kb.char('R')) window.location = window.location;
+	//RESTART
+	if (kb.char('R')) this.restart();
 }
 
 var game = new Game();

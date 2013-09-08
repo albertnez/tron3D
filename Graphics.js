@@ -104,12 +104,8 @@ Graphics.prototype.remove = function(x, y) {
 
 Graphics.prototype.restart = function() {
 	// REMOVE CURRENT OBJECTS FROM SCENE
-	for (var i = scene.children.length-1; i >= 0; i--) {
-		var obj = scene.children[i];
- 		if (obj !== camera) {
- 			scene.remove(obj);
- 			obj.dellocate();
- 		}
+	for (var i = this.scene.children.length-1; i >= 0; i--) {
+ 		this.scene.remove(this.scene.children[i]);
 	}
 
 	//BOARD
