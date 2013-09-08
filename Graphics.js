@@ -76,13 +76,13 @@ Graphics.prototype.cameraLogic = function(dt, p) {
 	}
 }
 
-Graphics.prototype.update = function(x, y, id, dead) {
+Graphics.prototype.update = function(x, y, id) {
 	if (this.cubesArray[y][x] === -1) {
 		var cube = THREE.SceneUtils.createMultiMaterialObject(
 			new THREE.CubeGeometry(1, 1, 0.5), 
 			[
 				new THREE.MeshBasicMaterial({color: 0x000000, shading: THREE.FlatShading, wireframe: true, transparent: true}),
-					new THREE.MeshBasicMaterial({color: (dead ? this.deadColor : this.colors[id])}) 
+					new THREE.MeshBasicMaterial({color: this.colors[id]}) 
 			 	] 
 			);
 
@@ -94,7 +94,7 @@ Graphics.prototype.update = function(x, y, id, dead) {
 		this.scene.add(this.cubesArray[y][x]);
 	}
 	else {
-		this.cubesArray[y][x].children[1].material.color.setHex((dead ? this.deadColor : this.colors[id]));
+		this.cubesArray[y][x].children[1].material.color.setHex(this.colors[id]);
 	}
 }
 

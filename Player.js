@@ -2,8 +2,9 @@
 function Player(obj) {
 	for (var prop in obj) this[prop] = obj[prop];
 	if (this.bot) this.controls = {};
-	this.startX = obj.x;
-	this.startY = obj.y;
+	this.originX = obj.x;
+	this.originY = obj.y;
+	this.update();
 }
 
 Player.prototype = {
@@ -12,8 +13,8 @@ Player.prototype = {
 	difficulty: 0,
 	x: 0,
 	y: 0,
-	startX: 0,
-	startY: 0,
+	originX: 0,
+	originY: 0,
 	dead: false,
 	direction: 0,
 	lastMove: -1,
@@ -30,26 +31,45 @@ Player.prototype.AI = function() {
 Player.prototype.move = function() {
 	if (!this.dead) {
 		if (this.bot) this.AI();
-		var tx = this.x+this.dx[this.direction], ty = this.y+this.dy[this.direction];
-		//OFF MAP
-		if (tx < 0 || tx >= MAP_WIDTH || ty < 0 || ty >= MAP_HEIGHT || map.tiles[ty][tx] > 0) {
-			this.dead = true;
-			deadPlayers.push({x: this.x, y: this.y, id: this.id});
+		switch(this.direction) {
+			case 0: ++this.x; break;
+			case 1:	--this.y; break;
+			case 2:	--this.x; break;
+			case 3:	++this.y; break;
 		}
-		else {
-			switch(this.direction) {
-				case 0: ++this.x; break;
-				case 1:	--this.y; break;
-				case 2:	--this.x; break;
-				case 3:	++this.y; break;
-			}
-		}
-
 		this.lastMove = this.direction;
-		map.update(this.x, this.y, this.id, this.dead);
 	}
 }
 
+Player.prototype.checkDeath = function() {
+	//OFF MAP
+	if (this.dead) return;
+	if (this.x < 0 || this.x >= MAP_WIDTH || this.y < 0 || this.y >= MAP_HEIGHT || map.tiles[this.y][this.x] > 0) {
+		this.remove = true;
+	}
+	else {
+		//Check collisions!
+		for (var i = players.length-1; i >= 0; --i) {
+			if (i+1 != this.id) {
+				if (this.x === players[i].x && this.y === players[i].y) {
+					this.remove = true;
+				}
+			}
+		}
+	}
+}
+
+Player.prototype.update = function() {
+	if (this.dead) return;
+	if (this.remove) {
+		this.dead = true;
+		console.log('removing ' + this.id + ' in ' + this.originX + ' ' + this.originY);
+		map.remove(this.originX, this.originY, this.id);
+	}
+	else {
+		map.update(this.x, this.y, this.id);
+	}
+}
 
 Player.prototype.control = function(dt) {
 	if (!this.dead && !this.bot) {
