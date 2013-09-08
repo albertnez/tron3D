@@ -9,9 +9,9 @@ function Map(width, height) {
 	}
 }
 
-Map.prototype.update = function(x, y, id, dead) {
+Map.prototype.update = function(x, y, id) {
 	this.tiles[y][x] = id;
-	graphics.update(x,y,id,dead)	
+	graphics.update(x,y,id)	
 }
 
 Map.prototype.remove  = function(x, y, id) {
