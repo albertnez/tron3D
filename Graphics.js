@@ -2,7 +2,7 @@
 function Graphics() {
 	//SCENE
 	this.scene = new THREE.Scene();
-		//CAMERA
+	//CAMERA
 	this.FOV = 45;
 	this.camera = new THREE.PerspectiveCamera( this.FOV, window.innerWidth / window.innerHeight, 0.1, 1000 );
 	//RENDERER
@@ -10,7 +10,6 @@ function Graphics() {
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( this.renderer.domElement );
 
-	//Array with players'colors. needs to change
 	this.colors = [
 		0x000000, //BLACK
 		0xFF0000, //RED
@@ -21,7 +20,7 @@ function Graphics() {
 	 	0x00FFFF, //AQUA
 	 	0xFF4AD2, //PINK
 	 	0XAAAAAA //GREY
-	 ];
+	];
 
 	//BOARD
 	this.materialsArray = [];
@@ -81,9 +80,9 @@ Graphics.prototype.update = function(x, y, id) {
 			new THREE.CubeGeometry(1, 1, 0.5), 
 			[
 				new THREE.MeshBasicMaterial({color: 0x000000, shading: THREE.FlatShading, wireframe: true, transparent: true}),
-					new THREE.MeshBasicMaterial({color: this.colors[id]}) 
-			 	] 
-			);
+				new THREE.MeshBasicMaterial({color: this.colors[id]}) 
+			] 
+		);
 
 		cube.position.x = x;
 		cube.position.y = -y;
@@ -140,7 +139,7 @@ Graphics.prototype.restart = function() {
 		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)*1.1+10;
 	}
 
-		//CUBES ARRAY
+	//CUBES ARRAY
 	this.cubesArray = [];
 	for (var i = 0; i < MAP_HEIGHT; ++i) {
 		this.cubesArray[i] = [];

@@ -63,7 +63,6 @@ Player.prototype.update = function(map, graphics) {
 	if (this.dead) return;
 	if (this.remove) {
 		this.dead = true;
-		console.log('removing ' + this.id + ' in ' + this.originX + ' ' + this.originY);
 		map.remove(this.originX, this.originY, this.id, graphics);
 	}
 	else {

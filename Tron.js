@@ -9,7 +9,7 @@ var MAP_WIDTH = 30; // Map width
 var MAP_HEIGHT = 30; // Tiles high of the map
 var LIGHTS_ON = false; // not working yet
 var SHADOWS_ON = false; // not working yet
-var NUM_PLAYERS = 2; // number of player: from 1 to 8.
+var NUM_PLAYERS = 4; // number of player: from 1 to 8.
 var RANDOM_START = false; // Players start at random position and direction;
 
 function Game() {
@@ -34,7 +34,8 @@ Game.prototype.setPlayers = function() {
 		});
 	}
 	this.players[0].controls = {right:'D', up:'W', left:'A', down:'S', stop:' '};
-
+	this.players[1].controls = {right:'L', up:'I', left:'J', down:'K', stop:' '};
+	this.players[1].bot = false;
 }
 
 Game.prototype.restart = function() {
@@ -42,10 +43,7 @@ Game.prototype.restart = function() {
 	this.map.restart();
 	this.setPlayers();
 	for (var i = game.players.length-1; i >= 0; --i) game.players[i].update(game.map, game.graphics);
-
-
 }
-// CONTROLS FOR PLAYER 1
 
 Game.prototype.update = function() {
 	for (var i = this.players.length-1; i >= 0; --i) this.players[i].move(this.map);
@@ -67,10 +65,10 @@ function loop() {
 	
 	var time = new Date().getTime();
 	var dt = (time-game.oldTime)/1000;
-
+	game.oldTime = time;
 
 	if (time-game.updateTime > 1000/SPS) {
-		game.update(dt);
+		game.update();
 		game.updateTime = time;
 	}
 
@@ -78,5 +76,4 @@ function loop() {
 	game.graphics.cameraLogic(dt, game.players[0]);
 	game.graphics.renderer.render(game.graphics.scene, game.graphics.camera);
 }
-
 loop();
