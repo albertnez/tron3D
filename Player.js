@@ -4,7 +4,7 @@ function Player(obj) {
 	if (this.bot) this.controls = {};
 	this.originX = obj.x;
 	this.originY = obj.y;
-	this.update();
+	//this.update();
 }
 
 Player.prototype = {
@@ -24,13 +24,13 @@ Player.prototype = {
 	arrayAI: [],
 }
 
-Player.prototype.AI = function() {
-	this.arrayAI[this.difficulty].bind(this)();
+Player.prototype.AI = function(map) {
+	this.arrayAI[this.difficulty].bind(this)(map);
 }
 
-Player.prototype.move = function() {
+Player.prototype.move = function(map) {
 	if (!this.dead) {
-		if (this.bot) this.AI();
+		if (this.bot) this.AI(map);
 		switch(this.direction) {
 			case 0: ++this.x; break;
 			case 1:	--this.y; break;
@@ -41,7 +41,7 @@ Player.prototype.move = function() {
 	}
 }
 
-Player.prototype.checkDeath = function() {
+Player.prototype.checkDeath = function(map, players) {
 	//OFF MAP
 	if (this.dead) return;
 	if (this.x < 0 || this.x >= MAP_WIDTH || this.y < 0 || this.y >= MAP_HEIGHT || map.tiles[this.y][this.x] > 0) {
@@ -59,15 +59,14 @@ Player.prototype.checkDeath = function() {
 	}
 }
 
-Player.prototype.update = function() {
+Player.prototype.update = function(map, graphics) {
 	if (this.dead) return;
 	if (this.remove) {
 		this.dead = true;
-		console.log('removing ' + this.id + ' in ' + this.originX + ' ' + this.originY);
-		map.remove(this.originX, this.originY, this.id);
+		map.remove(this.originX, this.originY, this.id, graphics);
 	}
 	else {
-		map.update(this.x, this.y, this.id);
+		map.update(this.x, this.y, this.id, graphics);
 	}
 }
 
