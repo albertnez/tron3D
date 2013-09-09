@@ -29,6 +29,7 @@ Game.prototype.setPlayers = function() {
 			bot:(i > 0),
 			difficulty: (i%2),
 			direction: (RANDOM_START ? Math.floor(Math.random()*4) : 2*(i%2)),
+			face: 0,
 			x: (RANDOM_START ? Math.floor(Math.random()*(MAP_WIDTH-10))+5 : MAP_WIDTH/2),
 			y: (RANDOM_START ? Math.floor(Math.random()*(MAP_HEIGHT-10))+5 : MAP_HEIGHT/2-(2*NUM_PLAYERS)+(4*i))
 		});
