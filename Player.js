@@ -78,6 +78,6 @@ Player.prototype.control = function(dt) {
 		if ((kb.char(this.controls.left) || (gamepad && gamepad.buttons[14])) && this.lastMove != 0) this.direction = 2;
 		if ((kb.char(this.controls.down) || (gamepad && gamepad.buttons[13])) && this.lastMove != 1) this.direction = 3;
 		if ((kb.char(this.controls.right) || (gamepad && gamepad.buttons[15])) && this.lastMove != 2) this.direction = 0;
-		if (kb.char(this.controls.stop)) this.direction = -1;
+		if (this.controls.stop && kb.char(this.controls.stop)) this.direction = -1;
 	}
 }

@@ -9,8 +9,9 @@ var MAP_WIDTH = 30; // Map width
 var MAP_HEIGHT = 30; // Tiles high of the map
 var LIGHTS_ON = false; // not working yet
 var SHADOWS_ON = false; // not working yet
-var NUM_PLAYERS = 4; // number of player: from 1 to 8.
-var RANDOM_START = false; // Players start at random position and direction;
+var NUM_PLAYERS = 4; // number of player: from 1 to 8
+var NUM_HUMANS = 1; // for now, from 0 to 2.
+var RANDOM_START = true; // Players start at random position and direction;
 
 function Game() {
 	this.graphics = new Graphics();
@@ -26,16 +27,15 @@ Game.prototype.setPlayers = function() {
 	for (var i = 0; i < NUM_PLAYERS; ++i) {
 		this.players[i] = new Player({ 
 			id: (i+1),
-			bot:(i > 0),
-			difficulty: (i%2),
+			bot:(i >= NUM_HUMANS),
+			difficulty: 1,
 			direction: (RANDOM_START ? Math.floor(Math.random()*4) : 2*(i%2)),
 			x: (RANDOM_START ? Math.floor(Math.random()*(MAP_WIDTH-10))+5 : MAP_WIDTH/2),
 			y: (RANDOM_START ? Math.floor(Math.random()*(MAP_HEIGHT-10))+5 : MAP_HEIGHT/2-(2*NUM_PLAYERS)+(4*i))
 		});
 	}
-	this.players[0].controls = {right:'D', up:'W', left:'A', down:'S', stop:' '};
-	this.players[1].controls = {right:'L', up:'I', left:'J', down:'K', stop:' '};
-	this.players[1].bot = false;
+	if (NUM_HUMANS >= 1) this.players[0].controls = {right:'D', up:'W', left:'A', down:'S', stop:' '};
+	if (NUM_HUMANS >= 2) this.players[1].controls = {right:'L', up:'I', left:'J', down:'K', stop:' '};
 }
 
 Game.prototype.restart = function() {
