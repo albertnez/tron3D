@@ -1,5 +1,6 @@
 //GRAPHICS
 function Graphics (CONF) {
+	this.CONF = CONF;
 	//SCENE
 	this.scene = new THREE.Scene();
 	//CAMERA
@@ -31,7 +32,7 @@ function Graphics (CONF) {
 	this.planeGeo = new THREE.PlaneGeometry( CONF.MAP_WIDTH, CONF.MAP_HEIGHT, CONF.MAP_WIDTH, CONF.MAP_HEIGHT );
 	for (var i = 0; 2*i < CONF.MAP_WIDTH*CONF.MAP_HEIGHT*2; ++i) {
 		this.planeGeo.faces[i*2].materialIndex = 
-		this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/CONF.MAP_WIDTH)*(CONF.MAP_WIDTH+1%2))%2; //Sure one of them isn't MAP_HEIGHT
+		this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/CONF.MAP_WIDTH)*(CONF.MAP_WIDTH+1%2))%2; //Sure one of them isn't MAP_HEIGHT?
 	}
 	this.plane = new THREE.Mesh( 
 		this.planeGeo,
@@ -46,6 +47,8 @@ function Graphics (CONF) {
 	//CAMERA SETTINGS
 	if (CONF.CAMERA_FOLLOW) {
 		this.camera.rotation.x = 0.38;
+		this.camera.position.x = CONF.MAP_WIDTH/2;
+		this.camera.position.y = -CONF.MAP_HEIGHT;
 		this.camera.position.z = CONF.CAMERA_DISTANCE;
 	}
 	else {
@@ -65,9 +68,9 @@ function Graphics (CONF) {
 }
 
 Graphics.prototype.cameraLogic = function(dt, p) {
-	if (CAMERA_FOLLOW) {
-		var speed = SPS/2;
-		var dist = CAMERA_DISTANCE/2;
+	if (this.CONF.CAMERA_FOLLOW) {
+		var speed = this.CONF.SPS/8;
+		var dist = this.CONF.CAMERA_DISTANCE/2;
 		this.camera.position.x += (p.x - this.camera.position.x)*dt*speed;
 		if (this.camera.position.y > -p.y - dist) speed*=2;
 		this.camera.position.y += (-p.y - dist - this.camera.position.y)*dt*speed;
@@ -147,4 +150,8 @@ Graphics.prototype.restart = function() {
 			this.cubesArray[i][j] = -1;
 		}
 	}
+}
+
+Graphics.prototype.render = function () {
+	this.renderer.render(this.scene, this.camera);
 }

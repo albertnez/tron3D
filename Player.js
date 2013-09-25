@@ -2,6 +2,7 @@
 
 function Player (i, CONF) {
 	if (!CONF) throw new Error ('Player needs a CONF.');
+	this.CONF = CONF;
 	this.id = i+1;
 	this.bot = (i >= CONF.NUM_HUMANS);
 	this.direction = (CONF.RANDOM_START ? Math.floor(Math.random()*4) : 2*(i%2));

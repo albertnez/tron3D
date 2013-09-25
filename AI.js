@@ -29,7 +29,7 @@ Player.prototype.arrayAI[0] = function (map) {
 
 Player.prototype.arrayAI[1] = function (map) {
 	var dfs = function(x,y) {
-		if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT || tmap[y][x]) return 0;
+		if (x < 0 || x >= map.tiles[0].length || y < 0 || y >= map.tiles.length || tmap[y][x]) return 0;
 		tmap[y][x] = -1;
 		return 1 + dfs(x+1, y) + dfs(x, y-1) + dfs(x-1, y) + dfs(x, y+1);
 	}
@@ -40,16 +40,16 @@ Player.prototype.arrayAI[1] = function (map) {
 	var t1, t2, t0;
 
 	var tmap = [];
-	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+	for (var i = 0; i < map.tiles.length; ++i) tmap[i] = map.tiles[i].slice(0);
 	t0 = dfs(this.x+this.dx[this.direction], this.y+this.dy[this.direction]);
 	
 	tmap = [];
-	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+	for (var i = 0; i < map.tiles.length; ++i) tmap[i] = map.tiles[i].slice(0);
 
 	t1 = dfs(this.x+this.dx[d1], this.y+this.dy[d1]);
 	
 	tmap = [];
-	for (var i = 0; i < MAP_HEIGHT; ++i) tmap[i] = map.tiles[i].slice(0);
+	for (var i = 0; i < map.tiles.length; ++i) tmap[i] = map.tiles[i].slice(0);
 	t2 = dfs(this.x+this.dx[d2],this.y+this.dy[d2]);
 
 	if (t1 > t0 && t1 >= t2) this.direction = d1; 
