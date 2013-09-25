@@ -1,5 +1,5 @@
 // NOOB AI
-Player.prototype.arrayAI[0] = function(map) {
+Player.prototype.arrayAI[0] = function (map) {
 	var ty = this.y + this.dy[this.direction], tx = this.x + this.dx[this.direction];
 	if (ty < 0 || ty >= MAP_HEIGHT || tx < 0 || tx >= MAP_WIDTH || map.tiles[ty][tx] > 0) {
 		var tmp = (this.direction+1)%4;
@@ -27,7 +27,7 @@ Player.prototype.arrayAI[0] = function(map) {
 }
 
 
-Player.prototype.arrayAI[1] = function(map) {
+Player.prototype.arrayAI[1] = function (map) {
 	var dfs = function(x,y) {
 		if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT || tmap[y][x]) return 0;
 		tmap[y][x] = -1;
