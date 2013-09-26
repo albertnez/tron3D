@@ -1,5 +1,6 @@
 //GRAPHICS
-function Graphics() {
+function Graphics (CONF) {
+	this.CONF = CONF;
 	//SCENE
 	this.scene = new THREE.Scene();
 	//CAMERA
@@ -28,46 +29,53 @@ function Graphics() {
 	this.materialsArray.push(new THREE.MeshBasicMaterial({color: 0xFFFFFF}));
 
 	this.multiMaterial = new THREE.MeshFaceMaterial(this.materialsArray);
-	this.planeGeo = new THREE.PlaneGeometry( MAP_WIDTH, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT );
-	for (var i = 0; 2*i < MAP_WIDTH*MAP_HEIGHT*2; ++i) {
+	this.planeGeo = new THREE.PlaneGeometry( CONF.MAP_WIDTH, CONF.MAP_HEIGHT, CONF.MAP_WIDTH, CONF.MAP_HEIGHT );
+	for (var i = 0; 2*i < CONF.MAP_WIDTH*CONF.MAP_HEIGHT*2; ++i) {
 		this.planeGeo.faces[i*2].materialIndex = 
-		this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/MAP_WIDTH)*(MAP_WIDTH+1%2))%2;
+		this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/CONF.MAP_WIDTH)*(CONF.MAP_WIDTH+1%2))%2; //Sure one of them isn't MAP_HEIGHT?
 	}
+	
+	this.generateScene();
+
+}
+
+Graphics.prototype.generateScene = function () {
 	this.plane = new THREE.Mesh( 
 		this.planeGeo,
 		this.multiMaterial
 	);
 	//make the top left tile be at (0,0);
-	this.plane.position.x = MAP_WIDTH*0.5-0.5; 
-	this.plane.position.y = -MAP_HEIGHT*0.5+0.5;
+	this.plane.position.x = this.CONF.MAP_WIDTH*0.5-0.5; 
+	this.plane.position.y = -this.CONF.MAP_HEIGHT*0.5+0.5;
 	this.scene.add(this.plane);
-	//END BOARD
-	
+
 	//CAMERA SETTINGS
-	if (CAMERA_FOLLOW) {
+	if (this.CONF.CAMERA_FOLLOW) {
 		this.camera.rotation.x = 0.38;
-		this.camera.position.z = CAMERA_DISTANCE;
+		this.camera.position.x = this.CONF.MAP_WIDTH/2;
+		this.camera.position.y = -this.CONF.MAP_HEIGHT;
+		this.camera.position.z = this.CONF.CAMERA_DISTANCE;
 	}
 	else {
-		this.camera.position.x = MAP_WIDTH/2;
-		this.camera.position.y = -MAP_HEIGHT/2;
-		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)*1.1+10;
+		this.camera.position.x = this.CONF.MAP_WIDTH/2;
+		this.camera.position.y = -this.CONF.MAP_HEIGHT/2;
+		this.camera.position.z = Math.max(this.CONF.MAP_HEIGHT, this.CONF.MAP_WIDTH)*1.1+10;
 	}
 
 	//CUBES ARRAY
 	this.cubesArray = [];
-	for (var i = 0; i < MAP_HEIGHT; ++i) {
+	for (var i = 0; i < this.CONF.MAP_HEIGHT; ++i) {
 		this.cubesArray[i] = [];
-		for (var j = 0; j < MAP_WIDTH; ++j) {
+		for (var j = 0; j < this.CONF.MAP_WIDTH; ++j) {
 			this.cubesArray[i][j] = -1;
 		}
 	}
 }
 
 Graphics.prototype.cameraLogic = function(dt, p) {
-	if (CAMERA_FOLLOW) {
-		var speed = SPS/2;
-		var dist = CAMERA_DISTANCE/2;
+	if (this.CONF.CAMERA_FOLLOW) {
+		var speed = this.CONF.SPS/8;
+		var dist = this.CONF.CAMERA_DISTANCE/2;
 		this.camera.position.x += (p.x - this.camera.position.x)*dt*speed;
 		if (this.camera.position.y > -p.y - dist) speed*=2;
 		this.camera.position.y += (-p.y - dist - this.camera.position.y)*dt*speed;
@@ -107,44 +115,9 @@ Graphics.prototype.restart = function() {
  		this.scene.remove(this.scene.children[i]);
 	}
 
-	//BOARD
-	this.materialsArray = [];
-	this.materialsArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
-	this.materialsArray.push(new THREE.MeshBasicMaterial({color: 0xFFFFFF}));
+	this.generateScene();
+}
 
-	this.multiMaterial = new THREE.MeshFaceMaterial(this.materialsArray);
-	this.planeGeo = new THREE.PlaneGeometry( MAP_WIDTH, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT );
-	for (var i = 0; 2*i < MAP_WIDTH*MAP_HEIGHT*2; ++i) {
-		this.planeGeo.faces[i*2].materialIndex = 
-		this.planeGeo.faces[i*2+1].materialIndex = (i+Math.floor(i/MAP_WIDTH)*(MAP_WIDTH+1%2))%2;
-	}
-	this.plane = new THREE.Mesh( 
-		this.planeGeo,
-		this.multiMaterial
-	);
-	//make the top left tile be at (0,0);
-	this.plane.position.x = MAP_WIDTH*0.5-0.5; 
-	this.plane.position.y = -MAP_HEIGHT*0.5+0.5;
-	this.scene.add(this.plane);
-	//END BOARD
-	
-	//CAMERA SETTINGS
-	if (CAMERA_FOLLOW) {
-		this.camera.rotation.x = 0.38;
-		this.camera.position.z = CAMERA_DISTANCE;
-	}
-	else {
-		this.camera.position.x = MAP_WIDTH/2;
-		this.camera.position.y = -MAP_HEIGHT/2;
-		this.camera.position.z = Math.max(MAP_HEIGHT, MAP_WIDTH)*1.1+10;
-	}
-
-	//CUBES ARRAY
-	this.cubesArray = [];
-	for (var i = 0; i < MAP_HEIGHT; ++i) {
-		this.cubesArray[i] = [];
-		for (var j = 0; j < MAP_WIDTH; ++j) {
-			this.cubesArray[i][j] = -1;
-		}
-	}
+Graphics.prototype.render = function () {
+	this.renderer.render(this.scene, this.camera);
 }
