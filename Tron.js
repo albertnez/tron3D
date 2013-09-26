@@ -51,7 +51,6 @@ Game.prototype.playerStep = function () {
 }
 
 Game.prototype.update = function (time) {
-	console.log('game update');
 	this.lastUpdate = time;
 	for (var i = this.players.length-1; i >= 0; --i) this.players[i].move(this.map);
 	for (var i = this.players.length-1; i >= 0; --i) this.players[i].checkDeath(this.map, this.players);

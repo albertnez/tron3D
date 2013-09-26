@@ -39,7 +39,7 @@ Player.prototype.move = function (map) {
 
 Player.prototype.checkPlayerCollision = function (map, players) {
 	for (var i = players.length-1; i >= 0; --i) {
-		if (i+1 != this.id && this.x == players[i].x && this.y == players[i].y) return true;
+		if (i+1 != this.id && !players[i].dead && this.x == players[i].x && this.y == players[i].y) return true;
 	}
 }
 
