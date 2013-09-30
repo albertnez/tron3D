@@ -1,4 +1,17 @@
 //GRAPHICS
+
+//http://stackoverflow.com/questions/641857/javascript-window-resize-event
+var addEvent = function(elem, type, eventHandle) {
+    if (elem == null || elem == undefined) return;
+    if ( elem.addEventListener ) {
+        elem.addEventListener( type, eventHandle, false );
+    } else if ( elem.attachEvent ) {
+        elem.attachEvent( "on" + type, eventHandle );
+    } else {
+        elem["on"+type]=eventHandle;
+    }
+};
+
 function Graphics (CONF) {
 	this.CONF = CONF;
 	//SCENE
@@ -10,6 +23,12 @@ function Graphics (CONF) {
 	this.renderer = new THREE.WebGLRenderer();
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( this.renderer.domElement );
+
+	addEvent(window, 'resize', function () {
+		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		this.camera.aspect = window.innerWidth / window.innerHeight;
+		this.camera.updateProjectionMatrix();
+	}.bind(this));
 
 	this.colors = [
 		0x000000, //BLACK

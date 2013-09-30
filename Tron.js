@@ -21,7 +21,7 @@ GameSettings.prototype = {
 	LIGHTS_ON : false, // not working yet
 	SHADOWS_ON : false, // not working yet
 	NUM_PLAYERS : 8, // number of player: from 1 to 8
-	NUM_HUMANS : 1, // for now, from 0 to 2.
+	NUM_HUMANS : 0, // for now, from 0 to 2.
 	RANDOM_START : true // Players start at random position and direction;
 }
 
@@ -62,10 +62,20 @@ Game.prototype.control = function () {
 	if (kb.char('R')) this.restart();
 }
 
+Game.prototype.firstAlivePlayer = function () {
+	for (var i = 0; i < this.players.length; ++i) {
+		if (!this.players[i].dead) {
+			this.lastPlayerForCamera = this.players[i];
+			return this.players[i];
+		}
+	}
+	return this.lastPlayerForCamera;
+}
+
 Game.prototype.logic = function (time, dt) {
 	if (time-this.lastUpdate > 1000/this.CONF.SPS) this.update(time);
 	this.control();
-	this.graphics.cameraLogic(dt, this.players[0]);
+	this.graphics.cameraLogic(dt, this.firstAlivePlayer());
 	this.graphics.render();
 }
 
