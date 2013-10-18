@@ -3,17 +3,117 @@
 	<head>
 		<title>Tron3D</title>
 		<style>
-			body { margin: 0px; padding: 0px }
-			canvas { width: 100%; height: 100% }
+			@font-face{
+				font-family:"StiffStaff";
+				src:url(../ludumpad-client/StiffStaff.otf);
+			}
+			body {
+				margin: 0px;
+				padding: 0px;
+				background-color: white;
+			}
+			#qr {
+				position: fixed;
+				top: 30px;
+				right: 30px;
+				z-index: 1;
+				border: 5px solid white;
+			}
+
+			#myCanvas {
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				z-index: 1;
+			}
+
 		</style>
 	</head>
 	<body>
+		<div id="qr"></div>
+		<canvas id="myCanvas"></canvas>
+		<script src="../ludumpad-client/jquery.min.js"></script>
+		<script src="../ludumpad-client/qrcode.min.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.10.3/plugins/CSSPlugin.min.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.10.3/easing/EasePack.min.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.10.3/TweenLite.min.js"></script>
+		<script src="../ludumpad-client/socket.io.js"></script>
+		<script src="../ludumpad-client/ludumpad.js"></script>
+
 		<script src="three.min.js"></script>
 		<script src="Keyboard.js"></script>
 		<script src="Graphics.js"></script>
 		<script src="Map.js"></script>
 		<script src="Player.js"></script>
 		<script src="AI.js"></script>
+
+		<script>
+
+			var gamepadHash = {};
+			var gamepadArray = [];
+
+			var canvas = document.getElementById('myCanvas');
+			var ctx = canvas.getContext('2d');
+
+			window.onresize = function () {
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+			}
+			window.onresize();
+
+
+			/* LudumPad */
+
+			LudumPad.UI.configure({canvas:canvas, ctx:ctx});
+			var channel = new LudumPad.Channel ();
+			channel.open();
+
+			channel.on('GamepadConnection', function (gamepad) {
+				gamepad.color = games[0].graphics.colorsCSS[gamepad.index+1];
+				setTimeout(function(){
+					channel.emitPacketToGamepads([gamepad], {bgcolor:gamepad.color, index:gamepad.index,
+						conf:[LudumPad.GamepadInputTypeDPAD]}, LudumPad.MessageTypeGamepadConfiguration);
+				}, 500);
+			});
+
+			channel.on('PacketFromGamepad', function (gPacket, gamepad) {
+				var pi = gamepad.index;
+				var dir = gPacket.pd;
+				if (dir != -1) {
+					switch (dir) {
+						case 0: games[0].players[pi].setDirection(1);
+						break;
+						case 1: games[0].players[pi].setDirection(0);
+						break;
+						case 2: games[0].players[pi].setDirection(3);
+						break;
+						case 3: games[0].players[pi].setDirection(2);
+						break;
+					}
+				}
+			});
+
+			/* LudumPad */
+
+
+			var qrcode = new QRCode("qr", {
+				text: "http://bluecodestudio.com/ludumpad/gamepad.html?channel="+channel.channelID,
+				width: 128,
+				height: 128,
+				colorDark : "#000000",
+				colorLight : "#ffffff",
+				correctLevel : QRCode.CorrectLevel.H
+			});
+
+			function lulz () {
+				requestAnimationFrame(lulz);
+				ctx.clearRect(0,0,canvas.width, canvas.height);
+				LudumPad.UI.render();
+			}
+			requestAnimationFrame(lulz);
+
+		</script>
+
 		<script src="Tron.js"></script>
 	</body>
 </html>

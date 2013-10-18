@@ -8,7 +8,10 @@ function Player (i, CONF) {
 	this.direction = (CONF.RANDOM_START ? Math.floor(Math.random()*4) : 2*(i%2));
 	this.x = this.originX = (CONF.RANDOM_START ? Math.floor(Math.random()*(CONF.MAP_WIDTH-10))+5 : CONF.MAP_WIDTH/2);
 	this.y = this.originY = (CONF.RANDOM_START ? Math.floor(Math.random()*(CONF.MAP_HEIGHT-10))+5 : CONF.MAP_HEIGHT/2-(2*CONF.NUM_PLAYERS)+(4*i));
-	if (!this.bot) this.controls = this.defaultControls[i];
+	if (!this.bot) {
+		this.controls = this.defaultControls[i];
+		if (this.controls == undefined) this.controls = this.defaultControls[0];
+	}
 }
 
 Player.prototype = {
@@ -64,12 +67,25 @@ Player.prototype.update = function (map, graphics) {
 	}
 }
 
+Player.prototype.setDirection = function (dir) {
+	switch (dir) {
+		case 0: if (this.lastMove != 2) this.direction = 0;
+		break;
+		case 1: if (this.lastMove != 3) this.direction = 1;
+		break;
+		case 2: if (this.lastMove != 0) this.direction = 2;
+		break;
+		case 3: if (this.lastMove != 1) this.direction = 3;
+		break;
+	}
+}
+
 Player.prototype.control = function(dt) {
 	if (this.dead || this.bot) return;
 	var gamepad = navigator.webkitGetGamepads && navigator.webkitGetGamepads()[this.id-1];
-	if ((kb.char(this.controls.up) || (gamepad && gamepad.buttons[12])) && this.lastMove != 3) this.direction = 1;
-	if ((kb.char(this.controls.left) || (gamepad && gamepad.buttons[14])) && this.lastMove != 0) this.direction = 2;
-	if ((kb.char(this.controls.down) || (gamepad && gamepad.buttons[13])) && this.lastMove != 1) this.direction = 3;
-	if ((kb.char(this.controls.right) || (gamepad && gamepad.buttons[15])) && this.lastMove != 2) this.direction = 0;
+	if (kb.char(this.controls.up) || (gamepad && gamepad.buttons[12])) this.setDirection(1);
+	if (kb.char(this.controls.left) || (gamepad && gamepad.buttons[14])) this.setDirection(2);
+	if (kb.char(this.controls.down) || (gamepad && gamepad.buttons[13])) this.setDirection(3);
+	if (kb.char(this.controls.right) || (gamepad && gamepad.buttons[15])) this.setDirection(0);
 	if (this.controls.stop && kb.char(this.controls.stop)) this.direction = -1;
 }
