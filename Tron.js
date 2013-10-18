@@ -11,11 +11,11 @@ function GameSettings (conf) {
 }
 
 GameSettings.prototype = {
-	SPS : 8, // Steps per second
+	SPS : 4, // Steps per second
 	CAMERA_SPEED : 3, // Speed of the camera following the player
 	CAMERA_DISTANCE : 35, //Distance of the camera from player
 	CAMERA_HEIGHT : 18, // Distance of camera from board
-	CAMERA_FOLLOW : true, // Follow the player instead of showing the entire map
+	CAMERA_FOLLOW : false, // Follow the player instead of showing the entire map
 	MAP_WIDTH : 30, // Map width
 	MAP_HEIGHT : 30, // Tiles high of the map
 	LIGHTS_ON : false, // not working yet
@@ -40,6 +40,10 @@ Game.prototype.setPlayers = function () {
 }
 
 Game.prototype.restart = function () {
+	this.CONF = new GameSettings ();
+	if (window.channel) {
+		this.CONF.NUM_HUMANS = channel.gamepadList.length;
+	}
 	this.graphics.restart();
 	this.map.restart();
 	this.setPlayers();
@@ -87,6 +91,7 @@ function loop() {
 	var time = new Date().getTime();
 	var dt = (time-oldTime)/1000;
 	oldTime = time;
+	if (window.channel && channel.paused) return;
 	for (var i = 0; i < games.length; ++i) games[i].logic(time, dt);
 }
 

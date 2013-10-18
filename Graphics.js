@@ -18,7 +18,7 @@ function Graphics (CONF) {
 	this.scene = new THREE.Scene();
 	//CAMERA
 	this.FOV = 45;
-	this.camera = new THREE.PerspectiveCamera( this.FOV, window.innerWidth / window.innerHeight, 0.1, 1000 );
+	this.camera = new THREE.PerspectiveCamera( this.FOV, window.innerWidth / window.innerHeight, 0.1, 1500 );
 	//RENDERER
 	this.renderer = new THREE.WebGLRenderer();
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
@@ -40,6 +40,18 @@ function Graphics (CONF) {
 	 	0x00FFFF, //AQUA
 	 	0xFF4AD2, //PINK
 	 	0XAAAAAA //GREY
+	];
+
+	this.colorsCSS = [
+		"#000000", //BLACK
+		"#FF0000", //RED
+		"#00FF00", //GREN
+		"#0000FF", //BLUE
+		"#922BC2", //PURPLE
+	 	"#FFFF00", //YELLOW
+	 	"#00FFFF", //AQUA
+	 	"#FF4AD2", //PINK
+	 	"#AAAAAA" //GREY
 	];
 
 	//BOARD
